@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
@@ -25,6 +27,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -94,13 +97,16 @@ fun UtilityApp(
         ) {
             when (selectedTab) {
                 "Utility" -> UtilityScreen(
-                    useFahrenheit = weatherViewModel.useFahrenheit
+                    useFahrenheit = weatherViewModel.useFahrenheit,
+                    selectedRegion = weatherViewModel.selectedRegion
                 )
 
                 "Settings" -> SettingsScreen(
                     useFahrenheit = weatherViewModel.useFahrenheit,
                     onTemperatureUnitChange =
-                        weatherViewModel::setTemperatureUnit
+                        weatherViewModel::setTemperatureUnit,
+                    selectedRegion = weatherViewModel.selectedRegion,
+                    onRegionChange = weatherViewModel::selectRegion
                 )
             }
         }
@@ -109,9 +115,21 @@ fun UtilityApp(
 
 @Composable
 fun UtilityScreen(
-    useFahrenheit: Boolean
+    useFahrenheit: Boolean,
+    selectedRegion: SingaporeRegion
 ) {
     // Keep the source value in Celsius; convert only for display.
+    val sampleReadings = when (selectedRegion) {
+        SingaporeRegion.NORTH -> 73 to 47
+        SingaporeRegion.SOUTH -> 69 to 36
+        SingaporeRegion.EAST -> 71 to 24
+        SingaporeRegion.WEST -> 78 to 47
+        SingaporeRegion.CENTRAL -> 71 to 42
+    }
+
+    val samplePsi = sampleReadings.first
+    val samplePm25 = sampleReadings.second
+
     val temperatureCelsius = 30.0
 
     val displayedTemperature = if (useFahrenheit) {
@@ -135,7 +153,7 @@ fun UtilityScreen(
         )
 
         Text(
-            text = "Central · Sample data",
+            text = "${selectedRegion.displayName} air-quality region · Sample data",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -158,7 +176,7 @@ fun UtilityScreen(
                 )
 
                 Text(
-                    text = "Partly cloudy",
+                    text = "Partly cloudy · Sample weather",
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
@@ -172,12 +190,12 @@ fun UtilityScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Air quality",
-                    style = MaterialTheme.typography.titleLarge
+                    text = "24-hour PSI: $samplePsi",
+                    style = MaterialTheme.typography.titleMedium
                 )
 
                 Text(
-                    text = "24-hour PSI: 71",
+                    text = "1-hour PM2.5: $samplePm25 µg/m³",
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -199,7 +217,9 @@ fun UtilityScreen(
 @Composable
 fun SettingsScreen(
     useFahrenheit: Boolean,
-    onTemperatureUnitChange: (Boolean) -> Unit
+    onTemperatureUnitChange: (Boolean) -> Unit,
+    selectedRegion: SingaporeRegion,
+    onRegionChange: (SingaporeRegion) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -253,6 +273,56 @@ fun SettingsScreen(
                 )
             }
         }
+
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(vertical = 12.dp)
+            ) {
+                Text(
+                    text = "Air-quality region",
+                    modifier = Modifier.padding(
+                        horizontal = 20.dp,
+                        vertical = 8.dp
+                    ),
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                Column(
+                    modifier = Modifier.selectableGroup()
+                ) {
+                    SingaporeRegion.entries.forEach { region ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = selectedRegion == region,
+                                    role = Role.RadioButton,
+                                    onClick = { onRegionChange(region) }
+                                )
+                                .padding(
+                                    horizontal = 20.dp,
+                                    vertical = 12.dp
+                                ),
+                            horizontalArrangement =
+                                Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedRegion == region,
+                                onClick = null
+                            )
+
+                            Text(
+                                text = region.displayName,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -260,7 +330,10 @@ fun SettingsScreen(
 @Composable
 fun UtilityScreenPreview() {
     MobileTech_UtilityAppTheme {
-        UtilityScreen(useFahrenheit = false)
+        UtilityScreen(
+            useFahrenheit = false,
+            selectedRegion = SingaporeRegion.CENTRAL
+        )
     }
 }
 
@@ -270,7 +343,9 @@ fun SettingsScreenPreview() {
     MobileTech_UtilityAppTheme {
         SettingsScreen(
             useFahrenheit = true,
-            onTemperatureUnitChange = {}
+            onTemperatureUnitChange = {},
+            selectedRegion = SingaporeRegion.CENTRAL,
+            onRegionChange = {}
         )
     }
 }

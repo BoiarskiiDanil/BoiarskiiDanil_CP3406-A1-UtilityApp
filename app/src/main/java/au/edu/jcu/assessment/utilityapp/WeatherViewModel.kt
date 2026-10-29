@@ -10,7 +10,14 @@ class WeatherViewModel : ViewModel() {
     var useFahrenheit by mutableStateOf(false)
         private set
 
+    var selectedRegion by mutableStateOf(SingaporeRegion.CENTRAL)
+        private set
+
     fun setTemperatureUnit(useFahrenheit: Boolean) {
         this.useFahrenheit = useFahrenheit
+    }
+
+    fun selectRegion(region: SingaporeRegion) {
+        selectedRegion = region
     }
 }
