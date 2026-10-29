@@ -1,4 +1,8 @@
 package au.edu.jcu.assessment.utilityapp
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Card
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -83,19 +87,76 @@ fun UtilityApp() {
 
 @Composable
 fun UtilityScreen() {
-    var counter by remember { mutableIntStateOf(0) }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Utility Screen", style = MaterialTheme.typography.headlineMedium)
-        Text("Counter: $counter", style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = "SkyWatch SG",
+            style = MaterialTheme.typography.headlineLarge
+        )
 
-        Button(onClick = { counter++ }) {
-            Text("Increment")
+        Text(
+            text = "Central · Sample data",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Weather",
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                Text(
+                    text = "30°C",
+                    style = MaterialTheme.typography.displayMedium
+                )
+
+                Text(
+                    text = "Partly cloudy",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Air quality",
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                Text(
+                    text = "24-hour PSI: 71",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = "1-hour PM2.5: 42 µg/m³",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = "Illustrative readings — not live",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
