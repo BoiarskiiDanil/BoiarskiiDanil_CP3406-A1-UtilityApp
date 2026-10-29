@@ -111,7 +111,9 @@ fun UtilityApp(
                     pm25State = weatherViewModel.pm25State,
                     onRefreshPm25 = weatherViewModel::refreshPm25,
                     weatherState = weatherViewModel.weatherState,
-                    onRefreshWeather = weatherViewModel::refreshWeather
+                    onRefreshWeather = weatherViewModel::refreshWeather,
+                    showHumidity = weatherViewModel.showHumidity,
+                    showWind = weatherViewModel.showWind
                 )
 
                 "Settings" -> SettingsScreen(
@@ -119,7 +121,13 @@ fun UtilityApp(
                     onTemperatureUnitChange =
                         weatherViewModel::setTemperatureUnit,
                     selectedRegion = weatherViewModel.selectedRegion,
-                    onRegionChange = weatherViewModel::selectRegion
+                    onRegionChange = weatherViewModel::selectRegion,
+                    showHumidity = weatherViewModel.showHumidity,
+                    onHumidityVisibilityChange =
+                        weatherViewModel::setHumidityVisible,
+                    showWind = weatherViewModel.showWind,
+                    onWindVisibilityChange =
+                        weatherViewModel::setWindVisible
                 )
             }
         }
@@ -135,7 +143,9 @@ fun UtilityScreen(
     pm25State: Pm25UiState,
     onRefreshPm25: () -> Unit,
     weatherState: WeatherUiState,
-    onRefreshWeather: () -> Unit
+    onRefreshWeather: () -> Unit,
+    showHumidity: Boolean,
+    showWind: Boolean
 ) {
     Column(
         modifier = Modifier
@@ -158,7 +168,9 @@ fun UtilityScreen(
         WeatherCard(
             state = weatherState,
             useFahrenheit = useFahrenheit,
-            onRefresh = onRefreshWeather
+            onRefresh = onRefreshWeather,
+            showHumidity = showHumidity,
+            showWind = showWind
         )
 
         Card(
@@ -202,7 +214,11 @@ fun SettingsScreen(
     useFahrenheit: Boolean,
     onTemperatureUnitChange: (Boolean) -> Unit,
     selectedRegion: SingaporeRegion,
-    onRegionChange: (SingaporeRegion) -> Unit
+    onRegionChange: (SingaporeRegion) -> Unit,
+    showHumidity: Boolean,
+    onHumidityVisibilityChange: (Boolean) -> Unit,
+    showWind: Boolean,
+    onWindVisibilityChange: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -305,6 +321,35 @@ fun SettingsScreen(
                         }
                     }
                 }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(vertical = 12.dp)
+            ) {
+                Text(
+                    text = "Dashboard details",
+                    modifier = Modifier.padding(
+                        horizontal = 20.dp,
+                        vertical = 8.dp
+                    ),
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                DisplayPreferenceSwitch(
+                    label = "Show humidity",
+                    checked = showHumidity,
+                    onCheckedChange = onHumidityVisibilityChange
+                )
+
+                DisplayPreferenceSwitch(
+                    label = "Show wind speed",
+                    checked = showWind,
+                    onCheckedChange = onWindVisibilityChange
+                )
             }
         }
     }
@@ -424,6 +469,40 @@ fun Pm25Reading(
     }
 }
 
+@Composable
+fun DisplayPreferenceSwitch(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = onCheckedChange
+            )
+            .padding(
+                horizontal = 20.dp,
+                vertical = 12.dp
+            ),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        Switch(
+            checked = checked,
+            onCheckedChange = null
+        )
+    }
+}
+
 private fun formatObservationTime(
     timestamp: OffsetDateTime
 ): String {
@@ -451,7 +530,9 @@ fun UtilityScreenPreview() {
             pm25State = Pm25UiState.Loading,
             onRefreshPm25 = {},
             weatherState = WeatherUiState.Loading,
-            onRefreshWeather = {}
+            onRefreshWeather = {},
+            showHumidity = true,
+            showWind = true
         )
     }
 }
@@ -464,7 +545,11 @@ fun SettingsScreenPreview() {
             useFahrenheit = true,
             onTemperatureUnitChange = {},
             selectedRegion = SingaporeRegion.CENTRAL,
-            onRegionChange = {}
+            onRegionChange = {},
+            showHumidity = true,
+            onHumidityVisibilityChange = {},
+            showWind = true,
+            onWindVisibilityChange = {}
         )
     }
 }

@@ -20,7 +20,9 @@ import kotlin.math.roundToInt
 fun WeatherCard(
     state: WeatherUiState,
     useFahrenheit: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    showHumidity: Boolean,
+    showWind: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -77,32 +79,36 @@ fun WeatherCard(
                         }"
                     )
 
-                    val humidity = weather.humidityPercent
-                        ?.takeIf { it.isFinite() && it in 0.0..100.0 }
+                    if (showHumidity) {
+                        val humidity = weather.humidityPercent
+                            ?.takeIf { it.isFinite() && it in 0.0..100.0 }
 
-                    Text(
-                        text = if (humidity != null) {
-                            "Humidity: ${humidity.roundToInt()}%"
-                        } else {
-                            "Humidity: Unavailable"
-                        }
-                    )
+                        Text(
+                            text = if (humidity != null) {
+                                "Humidity: ${humidity.roundToInt()}%"
+                            } else {
+                                "Humidity: Unavailable"
+                            }
+                        )
+                    }
 
-                    val wind = weather.windSpeedKmh
-                        ?.takeIf { it.isFinite() && it >= 0.0 }
+                    if (showWind) {
+                        val wind = weather.windSpeedKmh
+                            ?.takeIf { it.isFinite() && it >= 0.0 }
 
-                    Text(
-                        text = if (wind != null) {
-                            val formattedWind = String.format(
-                                Locale.ENGLISH,
-                                "%.1f",
-                                wind
-                            )
-                            "Wind: $formattedWind km/h"
-                        } else {
-                            "Wind: Unavailable"
-                        }
-                    )
+                        Text(
+                            text = if (wind != null) {
+                                val formattedWind = String.format(
+                                    Locale.ENGLISH,
+                                    "%.1f",
+                                    wind
+                                )
+                                "Wind: $formattedWind km/h"
+                            } else {
+                                "Wind: Unavailable"
+                            }
+                        )
+                    }
 
                     val formatter = DateTimeFormatter.ofPattern(
                         "d MMM yyyy, h:mm a",

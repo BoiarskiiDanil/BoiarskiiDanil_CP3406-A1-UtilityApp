@@ -30,6 +30,12 @@ class WeatherViewModel(
     var weatherState by mutableStateOf<WeatherUiState>(WeatherUiState.Loading)
         private set
 
+    var showHumidity by mutableStateOf(true)
+        private set
+
+    var showWind by mutableStateOf(true)
+        private set
+
     private var psiRefreshInProgress = false
     private var pm25RefreshInProgress = false
     private var weatherRefreshInProgress = false
@@ -109,6 +115,14 @@ class WeatherViewModel(
                 weatherRefreshInProgress = false
             }
         }
+    }
+
+    fun setHumidityVisible(visible: Boolean) {
+        showHumidity = visible
+    }
+
+    fun setWindVisible(visible: Boolean) {
+        showWind = visible
     }
 
     companion object {
