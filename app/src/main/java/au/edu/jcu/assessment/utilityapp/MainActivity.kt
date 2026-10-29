@@ -12,22 +12,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,10 +41,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
@@ -61,7 +63,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun UtilityApp(
-    weatherViewModel: WeatherViewModel = viewModel(factory = WeatherViewModel.Factory)
+    weatherViewModel: WeatherViewModel =
+        viewModel(factory = WeatherViewModel.Factory)
 ) {
     var selectedTab by rememberSaveable {
         mutableStateOf("Utility")
@@ -71,27 +74,27 @@ fun UtilityApp(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
+                    selected = selectedTab == "Utility",
+                    onClick = { selectedTab = "Utility" },
                     icon = {
                         Icon(
-                            Icons.Default.Home,
+                            imageVector = Icons.Default.Home,
                             contentDescription = null
                         )
                     },
-                    label = { Text("Utility") },
-                    selected = selectedTab == "Utility",
-                    onClick = { selectedTab = "Utility" }
+                    label = { Text("Utility") }
                 )
 
                 NavigationBarItem(
+                    selected = selectedTab == "Settings",
+                    onClick = { selectedTab = "Settings" },
                     icon = {
                         Icon(
-                            Icons.Default.Settings,
+                            imageVector = Icons.Default.Settings,
                             contentDescription = null
                         )
                     },
-                    label = { Text("Settings") },
-                    selected = selectedTab == "Settings",
-                    onClick = { selectedTab = "Settings" }
+                    label = { Text("Settings") }
                 )
             }
         }
@@ -104,7 +107,9 @@ fun UtilityApp(
                     useFahrenheit = weatherViewModel.useFahrenheit,
                     selectedRegion = weatherViewModel.selectedRegion,
                     psiState = weatherViewModel.psiState,
-                    onRefreshPsi = weatherViewModel::refreshPsi
+                    onRefreshPsi = weatherViewModel::refreshPsi,
+                    pm25State = weatherViewModel.pm25State,
+                    onRefreshPm25 = weatherViewModel::refreshPm25
                 )
 
                 "Settings" -> SettingsScreen(
@@ -124,20 +129,11 @@ fun UtilityScreen(
     useFahrenheit: Boolean,
     selectedRegion: SingaporeRegion,
     psiState: PsiUiState,
-    onRefreshPsi: () -> Unit
+    onRefreshPsi: () -> Unit,
+    pm25State: Pm25UiState,
+    onRefreshPm25: () -> Unit
 ) {
-    // Keep the source value in Celsius; convert only for display.
-    val sampleReadings = when (selectedRegion) {
-        SingaporeRegion.NORTH -> 73 to 47
-        SingaporeRegion.SOUTH -> 69 to 36
-        SingaporeRegion.EAST -> 71 to 24
-        SingaporeRegion.WEST -> 78 to 47
-        SingaporeRegion.CENTRAL -> 71 to 42
-    }
-
-    val samplePsi = sampleReadings.first
-    val samplePm25 = sampleReadings.second
-
+    // Weather remains sample data until its API is integrated.
     val temperatureCelsius = 30.0
 
     val displayedTemperature = if (useFahrenheit) {
@@ -195,27 +191,29 @@ fun UtilityScreen(
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
                     text = "Air quality",
                     style = MaterialTheme.typography.titleLarge
                 )
 
-                // Live PSI, observation timestamp and refresh button.
                 PsiReading(
                     state = psiState,
                     selectedRegion = selectedRegion,
                     onRefresh = onRefreshPsi
                 )
 
-                Text(
-                    text = "Sample 1-hour PM2.5: $samplePm25 µg/m³",
-                    style = MaterialTheme.typography.titleMedium
+                HorizontalDivider()
+
+                Pm25Reading(
+                    state = pm25State,
+                    selectedRegion = selectedRegion,
+                    onRefresh = onRefreshPm25
                 )
 
                 Text(
-                    text = "PM2.5 is sample data; PSI is fetched from data.gov.sg.",
+                    text = "Source: data.gov.sg / NEA",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -277,6 +275,7 @@ fun SettingsScreen(
                     )
                 }
 
+                // The enclosing row handles the interaction.
                 Switch(
                     checked = useFahrenheit,
                     onCheckedChange = null
@@ -342,55 +341,127 @@ fun PsiReading(
     selectedRegion: SingaporeRegion,
     onRefresh: () -> Unit
 ) {
-    when (state) {
-        PsiUiState.Loading -> {
-            Text("Loading PSI…")
-        }
-
-        PsiUiState.Error -> {
-            Text("Unable to load PSI. Check your connection and retry.")
-        }
-
-        is PsiUiState.Success -> {
-            val reading = state.observation.readings[selectedRegion.apiKey]
-                ?.takeIf { it >= 0 }
-
-            Text(
-                text = if (reading != null) {
-                    "24-hour PSI: $reading"
-                } else {
-                    "24-hour PSI: Unavailable"
-                },
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            val singaporeTime = state.observation.timestamp
-                .atZoneSameInstant(ZoneId.of("Asia/Singapore"))
-
-            val formatter = DateTimeFormatter.ofPattern(
-                "d MMM yyyy, h:mm a",
-                Locale.ENGLISH
-            )
-
-            Text(
-                text = "PSI observed: ${singaporeTime.format(formatter)} SGT",
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-    }
-
-    TextButton(
-        onClick = onRefresh,
-        enabled = state !is PsiUiState.Loading
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = if (state is PsiUiState.Loading) {
-                "Refreshing PSI…"
-            } else {
-                "Refresh PSI"
+        when (state) {
+            PsiUiState.Loading -> {
+                Text("Loading PSI…")
             }
-        )
+
+            PsiUiState.Error -> {
+                Text("Unable to load PSI. Check your connection and retry.")
+            }
+
+            is PsiUiState.Success -> {
+                val reading = state.observation
+                    .readings[selectedRegion.apiKey]
+                    ?.takeIf { it >= 0 }
+
+                Text(
+                    text = if (reading != null) {
+                        "24-hour PSI: $reading"
+                    } else {
+                        "24-hour PSI: Unavailable"
+                    },
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = "PSI observed: ${
+                        formatObservationTime(state.observation.timestamp)
+                    }",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+
+        TextButton(
+            onClick = onRefresh,
+            enabled = state !is PsiUiState.Loading
+        ) {
+            Text(
+                text = if (state is PsiUiState.Loading) {
+                    "Refreshing PSI…"
+                } else {
+                    "Refresh PSI"
+                }
+            )
+        }
     }
+}
+
+@Composable
+fun Pm25Reading(
+    state: Pm25UiState,
+    selectedRegion: SingaporeRegion,
+    onRefresh: () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        when (state) {
+            Pm25UiState.Loading -> {
+                Text("Loading PM2.5…")
+            }
+
+            Pm25UiState.Error -> {
+                Text(
+                    "Unable to load PM2.5. Check your connection and retry."
+                )
+            }
+
+            is Pm25UiState.Success -> {
+                val reading = state.observation
+                    .readings[selectedRegion.apiKey]
+                    ?.takeIf { it >= 0 }
+
+                Text(
+                    text = if (reading != null) {
+                        "1-hour PM2.5: $reading µg/m³"
+                    } else {
+                        "1-hour PM2.5: Unavailable"
+                    },
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = "PM2.5 observed: ${
+                        formatObservationTime(state.observation.timestamp)
+                    }",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+
+        TextButton(
+            onClick = onRefresh,
+            enabled = state !is Pm25UiState.Loading
+        ) {
+            Text(
+                text = if (state is Pm25UiState.Loading) {
+                    "Refreshing PM2.5…"
+                } else {
+                    "Refresh PM2.5"
+                }
+            )
+        }
+    }
+}
+
+private fun formatObservationTime(
+    timestamp: OffsetDateTime
+): String {
+    val singaporeTime = timestamp.atZoneSameInstant(
+        ZoneId.of("Asia/Singapore")
+    )
+
+    val formatter = DateTimeFormatter.ofPattern(
+        "d MMM yyyy, h:mm a",
+        Locale.ENGLISH
+    )
+
+    return "${singaporeTime.format(formatter)} SGT"
 }
 
 @Preview(showBackground = true)
@@ -401,7 +472,9 @@ fun UtilityScreenPreview() {
             useFahrenheit = false,
             selectedRegion = SingaporeRegion.CENTRAL,
             psiState = PsiUiState.Loading,
-            onRefreshPsi = {}
+            onRefreshPsi = {},
+            pm25State = Pm25UiState.Loading,
+            onRefreshPm25 = {}
         )
     }
 }

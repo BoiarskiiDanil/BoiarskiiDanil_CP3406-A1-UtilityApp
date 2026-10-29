@@ -35,8 +35,14 @@ class WeatherViewModel(
 
     private var refreshInProgress = false
 
+    var pm25State by mutableStateOf<Pm25UiState>(Pm25UiState.Loading)
+        private set
+
+    private var pm25RefreshInProgress = false
+
     init {
         refreshPsi()
+        refreshPm25()
     }
 
     fun setTemperatureUnit(useFahrenheit: Boolean) {
@@ -65,6 +71,27 @@ class WeatherViewModel(
                 psiState = PsiUiState.Error
             } finally {
                 refreshInProgress = false
+            }
+        }
+    }
+
+    fun refreshPm25() {
+        if (pm25RefreshInProgress) return
+
+        pm25RefreshInProgress = true
+        pm25State = Pm25UiState.Loading
+
+        viewModelScope.launch {
+            try {
+                pm25State = Pm25UiState.Success(
+                    observation = repository.getLatestPm25()
+                )
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                pm25State = Pm25UiState.Error
+            } finally {
+                pm25RefreshInProgress = false
             }
         }
     }

@@ -33,6 +33,9 @@ data class PsiObservation(
 interface AirQualityApiService {
     @GET("psi")
     suspend fun getPsi(): PsiResponse
+
+    @GET("pm25")
+    suspend fun getPm25(): Pm25Response
 }
 
 class AirQualityRepository(
@@ -63,6 +66,33 @@ class AirQualityRepository(
 
         return observations.maxByOrNull { it.timestamp.toInstant() }
             ?: error("No usable PSI observations were returned")
+    }
+
+    suspend fun getLatestPm25(): Pm25Observation {
+        val response = api.getPm25()
+
+        check(response.code == 0) {
+            "The API reported an unsuccessful response"
+        }
+
+        val observations = response.data?.items.orEmpty().mapNotNull { item ->
+            val timestamp = item.timestamp
+                ?.let { value ->
+                    runCatching { OffsetDateTime.parse(value) }.getOrNull()
+                }
+                ?: return@mapNotNull null
+
+            val readings = item.readings?.regionalPm25
+                ?: return@mapNotNull null
+
+            Pm25Observation(
+                timestamp = timestamp,
+                readings = readings
+            )
+        }
+
+        return observations.maxByOrNull { it.timestamp.toInstant() }
+            ?: error("No usable PM2.5 observations were returned")
     }
 }
 
