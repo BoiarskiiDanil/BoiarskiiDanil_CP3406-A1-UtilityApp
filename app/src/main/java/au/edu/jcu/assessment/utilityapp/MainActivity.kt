@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 import kotlin.math.roundToInt
 
@@ -57,7 +61,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun UtilityApp(
-    weatherViewModel: WeatherViewModel = viewModel()
+    weatherViewModel: WeatherViewModel = viewModel(factory = WeatherViewModel.Factory)
 ) {
     var selectedTab by rememberSaveable {
         mutableStateOf("Utility")
@@ -98,7 +102,9 @@ fun UtilityApp(
             when (selectedTab) {
                 "Utility" -> UtilityScreen(
                     useFahrenheit = weatherViewModel.useFahrenheit,
-                    selectedRegion = weatherViewModel.selectedRegion
+                    selectedRegion = weatherViewModel.selectedRegion,
+                    psiState = weatherViewModel.psiState,
+                    onRefreshPsi = weatherViewModel::refreshPsi
                 )
 
                 "Settings" -> SettingsScreen(
@@ -116,7 +122,9 @@ fun UtilityApp(
 @Composable
 fun UtilityScreen(
     useFahrenheit: Boolean,
-    selectedRegion: SingaporeRegion
+    selectedRegion: SingaporeRegion,
+    psiState: PsiUiState,
+    onRefreshPsi: () -> Unit
 ) {
     // Keep the source value in Celsius; convert only for display.
     val sampleReadings = when (selectedRegion) {
@@ -153,7 +161,7 @@ fun UtilityScreen(
         )
 
         Text(
-            text = "${selectedRegion.displayName} air-quality region · Sample data",
+            text = "${selectedRegion.displayName} air-quality region",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -195,13 +203,14 @@ fun UtilityScreen(
                 )
 
                 Text(
-                    text = "1-hour PM2.5: $samplePm25 µg/m³",
+                    text = "Sample 1-hour PM2.5: $samplePm25 µg/m³",
                     style = MaterialTheme.typography.titleMedium
                 )
 
                 Text(
-                    text = "1-hour PM2.5: 42 µg/m³",
-                    style = MaterialTheme.typography.titleMedium
+                    text = "PM2.5 is sample data; PSI is fetched from data.gov.sg.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Text(
@@ -326,13 +335,66 @@ fun SettingsScreen(
     }
 }
 
+@Composable
+fun PsiReading(
+    state: PsiUiState,
+    selectedRegion: SingaporeRegion,
+    onRefresh: () -> Unit
+) {
+    when (state) {
+        PsiUiState.Loading -> {
+            Text("Loading PSI…")
+        }
+
+        PsiUiState.Error -> {
+            Text("Unable to load PSI. Check your connection and retry.")
+        }
+
+        is PsiUiState.Success -> {
+            val reading = state.observation.readings[selectedRegion.apiKey]
+                ?.takeIf { it >= 0 }
+
+            Text(
+                text = if (reading != null) {
+                    "24-hour PSI: $reading"
+                } else {
+                    "24-hour PSI: Unavailable"
+                },
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            val singaporeTime = state.observation.timestamp
+                .atZoneSameInstant(ZoneId.of("Asia/Singapore"))
+
+            val formatter = DateTimeFormatter.ofPattern(
+                "d MMM yyyy, h:mm a",
+                Locale.ENGLISH
+            )
+
+            Text(
+                text = "PSI observed: ${singaporeTime.format(formatter)} SGT",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+
+    TextButton(
+        onClick = onRefresh,
+        enabled = state != PsiUiState.Loading
+    ) {
+        Text("Refresh PSI")
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun UtilityScreenPreview() {
     MobileTech_UtilityAppTheme {
         UtilityScreen(
             useFahrenheit = false,
-            selectedRegion = SingaporeRegion.CENTRAL
+            selectedRegion = SingaporeRegion.CENTRAL,
+            psiState = PsiUiState.Loading,
+            onRefreshPsi = {}
         )
     }
 }
