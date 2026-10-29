@@ -198,8 +198,15 @@ fun UtilityScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "24-hour PSI: $samplePsi",
-                    style = MaterialTheme.typography.titleMedium
+                    text = "Air quality",
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                // Live PSI, observation timestamp and refresh button.
+                PsiReading(
+                    state = psiState,
+                    selectedRegion = selectedRegion,
+                    onRefresh = onRefreshPsi
                 )
 
                 Text(
@@ -209,12 +216,6 @@ fun UtilityScreen(
 
                 Text(
                     text = "PM2.5 is sample data; PSI is fetched from data.gov.sg.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = "Illustrative readings — not live",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -380,9 +381,15 @@ fun PsiReading(
 
     TextButton(
         onClick = onRefresh,
-        enabled = state != PsiUiState.Loading
+        enabled = state !is PsiUiState.Loading
     ) {
-        Text("Refresh PSI")
+        Text(
+            text = if (state is PsiUiState.Loading) {
+                "Refreshing PSI…"
+            } else {
+                "Refresh PSI"
+            }
+        )
     }
 }
 
