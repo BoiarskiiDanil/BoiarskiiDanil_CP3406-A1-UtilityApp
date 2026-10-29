@@ -109,4 +109,16 @@ object AppContainer {
     val airQualityRepository: AirQualityRepository by lazy {
         AirQualityRepository(api)
     }
+
+    private val weatherApi: WeatherApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.open-meteo.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(WeatherApiService::class.java)
+    }
+
+    val weatherRepository: WeatherRepository by lazy {
+        WeatherRepository(weatherApi)
+    }
 }

@@ -109,7 +109,9 @@ fun UtilityApp(
                     psiState = weatherViewModel.psiState,
                     onRefreshPsi = weatherViewModel::refreshPsi,
                     pm25State = weatherViewModel.pm25State,
-                    onRefreshPm25 = weatherViewModel::refreshPm25
+                    onRefreshPm25 = weatherViewModel::refreshPm25,
+                    weatherState = weatherViewModel.weatherState,
+                    onRefreshWeather = weatherViewModel::refreshWeather
                 )
 
                 "Settings" -> SettingsScreen(
@@ -131,19 +133,10 @@ fun UtilityScreen(
     psiState: PsiUiState,
     onRefreshPsi: () -> Unit,
     pm25State: Pm25UiState,
-    onRefreshPm25: () -> Unit
+    onRefreshPm25: () -> Unit,
+    weatherState: WeatherUiState,
+    onRefreshWeather: () -> Unit
 ) {
-    // Weather remains sample data until its API is integrated.
-    val temperatureCelsius = 30.0
-
-    val displayedTemperature = if (useFahrenheit) {
-        temperatureCelsius * 9.0 / 5.0 + 32
-    } else {
-        temperatureCelsius
-    }
-
-    val temperatureUnit = if (useFahrenheit) "°F" else "°C"
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -162,29 +155,11 @@ fun UtilityScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Weather",
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                Text(
-                    text = "${displayedTemperature.roundToInt()}$temperatureUnit",
-                    style = MaterialTheme.typography.displayMedium
-                )
-
-                Text(
-                    text = "Partly cloudy · Sample weather",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-        }
+        WeatherCard(
+            state = weatherState,
+            useFahrenheit = useFahrenheit,
+            onRefresh = onRefreshWeather
+        )
 
         Card(
             modifier = Modifier.fillMaxWidth()
@@ -474,7 +449,9 @@ fun UtilityScreenPreview() {
             psiState = PsiUiState.Loading,
             onRefreshPsi = {},
             pm25State = Pm25UiState.Loading,
-            onRefreshPm25 = {}
+            onRefreshPm25 = {},
+            weatherState = WeatherUiState.Loading,
+            onRefreshWeather = {}
         )
     }
 }

@@ -10,18 +10,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
-sealed interface PsiUiState {
-    data object Loading : PsiUiState
-
-    data class Success(
-        val observation: PsiObservation
-    ) : PsiUiState
-
-    data object Error : PsiUiState
-}
-
 class WeatherViewModel(
-    private val repository: AirQualityRepository
+    private val repository: AirQualityRepository,
+    private val weatherRepository: WeatherRepository
 ) : ViewModel() {
 
     var useFahrenheit by mutableStateOf(false)
@@ -33,16 +24,20 @@ class WeatherViewModel(
     var psiState by mutableStateOf<PsiUiState>(PsiUiState.Loading)
         private set
 
-    private var refreshInProgress = false
-
     var pm25State by mutableStateOf<Pm25UiState>(Pm25UiState.Loading)
         private set
 
+    var weatherState by mutableStateOf<WeatherUiState>(WeatherUiState.Loading)
+        private set
+
+    private var psiRefreshInProgress = false
     private var pm25RefreshInProgress = false
+    private var weatherRefreshInProgress = false
 
     init {
         refreshPsi()
         refreshPm25()
+        refreshWeather()
     }
 
     fun setTemperatureUnit(useFahrenheit: Boolean) {
@@ -54,10 +49,9 @@ class WeatherViewModel(
     }
 
     fun refreshPsi() {
-        // Prevent overlapping requests from repeated refresh taps.
-        if (refreshInProgress) return
+        if (psiRefreshInProgress) return
 
-        refreshInProgress = true
+        psiRefreshInProgress = true
         psiState = PsiUiState.Loading
 
         viewModelScope.launch {
@@ -70,7 +64,7 @@ class WeatherViewModel(
             } catch (exception: Exception) {
                 psiState = PsiUiState.Error
             } finally {
-                refreshInProgress = false
+                psiRefreshInProgress = false
             }
         }
     }
@@ -96,11 +90,34 @@ class WeatherViewModel(
         }
     }
 
-    // Declared before the init block executes; see placement below.
+    fun refreshWeather() {
+        if (weatherRefreshInProgress) return
+
+        weatherRefreshInProgress = true
+        weatherState = WeatherUiState.Loading
+
+        viewModelScope.launch {
+            try {
+                weatherState = WeatherUiState.Success(
+                    observation = weatherRepository.getCurrentWeather()
+                )
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                weatherState = WeatherUiState.Error
+            } finally {
+                weatherRefreshInProgress = false
+            }
+        }
+    }
+
     companion object {
         val Factory = viewModelFactory {
             initializer {
-                WeatherViewModel(AppContainer.airQualityRepository)
+                WeatherViewModel(
+                    repository = AppContainer.airQualityRepository,
+                    weatherRepository = AppContainer.weatherRepository
+                )
             }
         }
     }
