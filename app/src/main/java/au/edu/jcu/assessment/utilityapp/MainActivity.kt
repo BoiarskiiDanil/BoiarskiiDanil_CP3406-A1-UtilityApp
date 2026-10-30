@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 import java.time.OffsetDateTime
@@ -82,7 +83,7 @@ fun UtilityApp(
                             contentDescription = null
                         )
                     },
-                    label = { Text("Utility") }
+                    label = { Text("Dashboard") }
                 )
 
                 NavigationBarItem(
@@ -154,9 +155,16 @@ fun UtilityScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        //App name and subtitle on top of the dashboard
         Text(
-            text = "SkyWatch SG",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineLarge
+        )
+
+        Text(
+            text = stringResource(R.string.app_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Text(
@@ -164,6 +172,7 @@ fun UtilityScreen(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        //
 
         WeatherCard(
             state = weatherState,
@@ -173,8 +182,6 @@ fun UtilityScreen(
             showWind = showWind
         )
 
-        HazeGuidanceCard()
-
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -182,6 +189,7 @@ fun UtilityScreen(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                //Air-quality card
                 Text(
                     text = "Air quality",
                     style = MaterialTheme.typography.titleLarge
@@ -206,8 +214,11 @@ fun UtilityScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                //
             }
         }
+
+        HazeGuidanceCard()
     }
 }
 
@@ -253,6 +264,7 @@ fun SettingsScreen(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    //Settings display
                     Text(
                         text = "Use Fahrenheit",
                         style = MaterialTheme.typography.titleMedium
@@ -266,9 +278,9 @@ fun SettingsScreen(
                         },
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    //
                 }
 
-                // The enclosing row handles the interaction.
                 Switch(
                     checked = useFahrenheit,
                     onCheckedChange = null

@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">MobileTech Utility App</string>
+    <string name="app_name">SkyWatch SG</string>
+    <string name="app_subtitle">Weather and Air Quality at a Glance</string>
 </resources>
