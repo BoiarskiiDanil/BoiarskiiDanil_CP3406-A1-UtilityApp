@@ -173,6 +173,8 @@ fun UtilityScreen(
             showWind = showWind
         )
 
+        HazeGuidanceCard()
+
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -387,6 +389,11 @@ fun PsiReading(
                     style = MaterialTheme.typography.titleMedium
                 )
 
+                AirQualityIndicator(
+                    title = "24-hour PSI category",
+                    category = classifyPsi(reading)
+                )
+
                 Text(
                     text = "PSI observed: ${
                         formatObservationTime(state.observation.timestamp)
@@ -443,6 +450,17 @@ fun Pm25Reading(
                         "1-hour PM2.5: Unavailable"
                     },
                     style = MaterialTheme.typography.titleMedium
+                )
+
+                AirQualityIndicator(
+                    title = "1-hour PM2.5 band",
+                    category = classifyPm25(reading)
+                )
+
+                Text(
+                    text = "The 1-hour PM2.5 band and 24-hour PSI category use different scales.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Text(
