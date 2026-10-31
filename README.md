@@ -1,55 +1,61 @@
-# MobileTech Utility App
+# SkyWatch SG
 
-This is a basic Android app template for **Assessment 1: Utility App**.
-It provides the structure for a simple tabular UI using **Jetpack Compose** and **Material Design 3**.
+**Weather and Air Quality at a Glance**
 
----
+An Android utility app developed for **CP3406 Mobile Computing —
+Assessment 1** at James Cook University Singapore.
 
-## Getting Started
+## Features
 
-### How to Run
-1. Clone or download this repo  
-2. Open in Android Studio  
-3. Run on an emulator or physical device (API 26+ recommended)  
+- Weather: temperature, feels-like temperature, humidity, wind and conditions.
+- Regional 24-hour PSI and one-hour PM2.5 with separate classifications.
+- Observation timestamps, independent refresh buttons and error handling.
+- Persistent settings: region, °C/°F, and humidity/wind visibility.
+- Link to official NEA haze guidance.
 
----
+## Technology
 
-## Composables
+Kotlin, Jetpack Compose, Material Design 3, ViewModel, Repository pattern,
+manual dependency injection, Retrofit/Gson, coroutines and Preferences DataStore.
 
-### UtilityApp()
-- Contains the screen layout using a Scaffold
-- Toggles content between Utility and Settings
+## Run
 
-### UtilityScreen()
-- Displays a simple counter (replace with your utility logic)  
-- Includes a button to increment the counter
+1. Open the project in Android Studio.
+2. Install Android SDK 36 and sync Gradle.
+3. Run on an emulator or device with **API 26+** and Internet access.
 
-### SettingsScreen()
-- Placeholder for user preferences or configuration  
-- Can be extended to modify main screen behavior (e.g., theme, units, limits)  
+The project uses Gradle 8.13 and requests JetBrains Java 21.
 
----
+## Data sources
 
-## Key Concepts Covered
+- [Open-Meteo](https://open-meteo.com/en/docs): weather.
+- [data.gov.sg PSI](https://api-open.data.gov.sg/v2/real-time/api/psi): 24-hour PSI.
+- [data.gov.sg PM2.5](https://api-open.data.gov.sg/v2/real-time/api/pm25): one-hour PM2.5.
+- [NEA haze guidance](https://www.haze.gov.sg/resources/advisory).
 
-| Week | Concept                        | Used In                          |
-|------|--------------------------------|----------------------------------|
-| 1    | Kotlin + Android Studio         | MainActivity.kt |
-| 2    | Jetpack Compose Layouts         | UtilityApp(), UtilityScreen(), SettingsScreen()   |
-| 3    | Material Design 3               | MobileTechUtilityAppTheme, MaterialTheme.typography |
-| 4    | ViewModel | Not included in starter          |
-| 5    | Retrofit  | Not included in starter          |
+Weather uses fixed Singapore coordinates **1.3521, 103.8198**.
+Region selection affects air quality only. Data refreshes at launch
+or manually; check observation timestamps for freshness.
 
----
+## Validation
 
-## Suggested Extensions
-- Replace counter with a real utility (e.g., hydration tracker, timer)  
-- Add a ViewModel for state management  
-- Use SharedPreferences or DataStore to persist settings  
-- Add a simple API call using Retrofit (e.g., fetch weather or quotes)  
+Run on Windows:
 
----
+```powershell
+.\gradlew.bat assembleDebug testDebugUnitTest lintDebug
+```
 
-## 📚 License
-This template is provided for educational use in CP3406.  
-Feel free to modify and extend it for your assessment.
+Manual checks include API retrieval, offline recovery, region/unit
+changes, display preferences and settings persistence.
+API exceptions are logged under `SkyWatchNetwork` in Logcat.
+
+## Remaining work
+
+Verify and implement the planned condition-based activity advisory.
+The official NEA guidance link is already available.
+
+## Acknowledgements
+
+Based on the CP3406 MobileTech Utility App starter.
+AI assisted with learning, implementation guidance, debugging and
+documentation; see the submitted AI-use declaration.
