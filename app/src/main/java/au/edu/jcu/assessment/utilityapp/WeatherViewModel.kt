@@ -1,5 +1,8 @@
 package au.edu.jcu.assessment.utilityapp
 
+import android.app.Application
+import android.util.Log
+import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -7,12 +10,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class WeatherViewModel(
     private val repository: AirQualityRepository,
-    private val weatherRepository: WeatherRepository
+    private val weatherRepository: WeatherRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     var useFahrenheit by mutableStateOf(false)
@@ -36,22 +41,43 @@ class WeatherViewModel(
     var showWind by mutableStateOf(true)
         private set
 
+    var settingsError by mutableStateOf<String?>(null)
+        private set
+
     private var psiRefreshInProgress = false
     private var pm25RefreshInProgress = false
     private var weatherRefreshInProgress = false
 
     init {
+        viewModelScope.launch {
+            try {
+                settingsRepository.settings.collect { settings ->
+                    useFahrenheit = settings.useFahrenheit
+                    selectedRegion = settings.selectedRegion
+                    showHumidity = settings.showHumidity
+                    showWind = settings.showWind
+                }
+            } catch (exception: IOException) {
+                settingsError =
+                    "Could not read saved settings. Default settings are in use."
+            }
+        }
+
         refreshPsi()
         refreshPm25()
         refreshWeather()
     }
 
     fun setTemperatureUnit(useFahrenheit: Boolean) {
-        this.useFahrenheit = useFahrenheit
+        saveSetting {
+            settingsRepository.setTemperatureUnit(useFahrenheit)
+        }
     }
 
     fun selectRegion(region: SingaporeRegion) {
-        selectedRegion = region
+        saveSetting {
+            settingsRepository.selectRegion(region)
+        }
     }
 
     fun refreshPsi() {
@@ -68,6 +94,11 @@ class WeatherViewModel(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
+                Log.e(
+                    "SkyWatchNetwork",
+                    "PSI failed: ${exception.javaClass.simpleName}: ${exception.message}",
+                    exception
+                )
                 psiState = PsiUiState.Error
             } finally {
                 psiRefreshInProgress = false
@@ -89,6 +120,11 @@ class WeatherViewModel(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
+                Log.e(
+                    "SkyWatchNetwork",
+                    "PM2.5 failed: ${exception.javaClass.simpleName}: ${exception.message}",
+                    exception
+                )
                 pm25State = Pm25UiState.Error
             } finally {
                 pm25RefreshInProgress = false
@@ -110,6 +146,11 @@ class WeatherViewModel(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
+                Log.e(
+                    "SkyWatchNetwork",
+                    "Weather failed: ${exception.javaClass.simpleName}: ${exception.message}",
+                    exception
+                )
                 weatherState = WeatherUiState.Error
             } finally {
                 weatherRefreshInProgress = false
@@ -118,20 +159,41 @@ class WeatherViewModel(
     }
 
     fun setHumidityVisible(visible: Boolean) {
-        showHumidity = visible
+        saveSetting {
+            settingsRepository.setHumidityVisible(visible)
+        }
     }
 
     fun setWindVisible(visible: Boolean) {
-        showWind = visible
+        saveSetting {
+            settingsRepository.setWindVisible(visible)
+        }
     }
 
     companion object {
         val Factory = viewModelFactory {
             initializer {
+                val application: Application = checkNotNull(
+                    this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
+                )
+
                 WeatherViewModel(
                     repository = AppContainer.airQualityRepository,
-                    weatherRepository = AppContainer.weatherRepository
+                    weatherRepository = AppContainer.weatherRepository,
+                    settingsRepository = SettingsRepository(application)
                 )
+            }
+        }
+    }
+
+    private fun saveSetting(update: suspend () -> Unit) {
+        viewModelScope.launch {
+            settingsError = null
+
+            try {
+                update()
+            } catch (exception: IOException) {
+                settingsError = "Could not save the setting. Please try again."
             }
         }
     }

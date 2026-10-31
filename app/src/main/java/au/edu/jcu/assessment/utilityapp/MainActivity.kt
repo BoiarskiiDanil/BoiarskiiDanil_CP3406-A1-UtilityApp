@@ -118,6 +118,7 @@ fun UtilityApp(
                 )
 
                 "Settings" -> SettingsScreen(
+                    settingsError = weatherViewModel.settingsError,
                     useFahrenheit = weatherViewModel.useFahrenheit,
                     onTemperatureUnitChange =
                         weatherViewModel::setTemperatureUnit,
@@ -129,6 +130,7 @@ fun UtilityApp(
                     showWind = weatherViewModel.showWind,
                     onWindVisibilityChange =
                         weatherViewModel::setWindVisible
+
                 )
             }
         }
@@ -231,7 +233,8 @@ fun SettingsScreen(
     showHumidity: Boolean,
     onHumidityVisibilityChange: (Boolean) -> Unit,
     showWind: Boolean,
-    onWindVisibilityChange: (Boolean) -> Unit
+    onWindVisibilityChange: (Boolean) -> Unit,
+    settingsError: String? = null
 ) {
     Column(
         modifier = Modifier
@@ -365,6 +368,14 @@ fun SettingsScreen(
                     onCheckedChange = onWindVisibilityChange
                 )
             }
+        }
+
+        if (settingsError != null) {
+            Text(
+                text = settingsError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
