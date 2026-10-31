@@ -54,8 +54,5 @@ API exceptions are logged under `SkyWatchNetwork` in Logcat.
 Verify and implement the planned condition-based activity advisory.
 The official NEA guidance link is already available.
 
-## Acknowledgements
-
-Based on the CP3406 MobileTech Utility App starter.
-AI assisted with learning, implementation guidance, debugging and
-documentation; see the submitted AI-use declaration.
+## Generative AI usage acknowledgment
+I acknowledge using OpenAI ChatGPT/Codex (https://chatgpt.com/) for Kotlin and Jetpack Compose explanations, implementation guidance, debugging and documentation drafting for SkyWatch SG. Prompts included “Generate the code to display the dashboard UI” and “What steps are to take to implement persistent settings?” Generated code and documentation were incorporated into the project, with revisions during development and testing.
